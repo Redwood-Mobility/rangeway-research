@@ -1,0 +1,64 @@
+---
+layout: default
+title: Research Engine
+---
+
+<header class="header">
+  <h1>Rangeway Research</h1>
+  <p>AI-powered insights for EV charging and hospitality</p>
+</header>
+
+<section class="search-section">
+  <div class="search-container">
+    <input 
+      type="text" 
+      id="search-input" 
+      class="search-input" 
+      placeholder="Search for EV charging trends, hospitality insights, competitor intel..."
+    >
+    <button id="search-button" class="search-button">Search</button>
+  </div>
+  
+  <div class="quick-searches">
+    <button class="quick-search-tag" data-query="EV road trip hospitality trends 2025">Road Trip Trends</button>
+    <button class="quick-search-tag" data-query="Tesla Supercharger lounge amenities experience">Tesla Lounges</button>
+    <button class="quick-search-tag" data-query="NEVI funding scenic corridors national parks">NEVI Funding</button>
+    <button class="quick-search-tag" data-query="Buc-ee's customer experience hospitality model">Buc-ee's Model</button>
+    <button class="quick-search-tag" data-query="EV charging customer complaints pain points">Pain Points</button>
+    <button class="quick-search-tag" data-query="premium traveler demographics road trips">Traveler Demographics</button>
+  </div>
+</section>
+
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <p class="loading-text">Searching the web and analyzing results...</p>
+  <p class="loading-text" style="font-size: 0.85rem; margin-top: 0.5rem;">This may take 30-60 seconds</p>
+</div>
+
+<div id="error" class="error"></div>
+
+<div id="results" class="results">
+  <div class="summary-card">
+    <h2>Summary</h2>
+    <p id="summary-content"></p>
+  </div>
+
+  <section class="sources-section">
+    <h2>Sources</h2>
+    <div id="sources-grid" class="sources-grid"></div>
+  </section>
+
+  <section class="insights-section">
+    <h2>Research Insights</h2>
+    <div id="insights-grid" class="insights-grid"></div>
+  </section>
+
+  <div class="implications-card">
+    <h2>Implications for Rangeway</h2>
+    <ul id="implications-list"></ul>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>Powered by Perplexity AI via n8n</p>
+</footer>

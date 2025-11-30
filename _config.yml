@@ -1,0 +1,15 @@
+title: Rangeway Research
+description: AI-powered research engine for EV charging and hospitality insights
+baseurl: "/rangeway-research"
+url: ""
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-seo-tag
+
+# Exclude from build
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
