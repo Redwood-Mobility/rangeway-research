@@ -91,10 +91,21 @@ function displayResults(data) {
 
   console.log('Raw response:', data);
 
-  // Handle the n8n response format: [{ "text": "markdown content" }]
+  // Handle Perplexity API response format
   let markdownContent = '';
+  let citations = [];
+  let searchResults = [];
   
-  if (Array.isArray(data) && data.length > 0 && data[0].text) {
+  // Check if this is Perplexity API format (has choices, citations, search_results)
+  const perplexityData = Array.isArray(data) ? data[0] : data;
+  
+  if (perplexityData?.choices?.[0]?.message?.content) {
+    // Perplexity API format
+    markdownContent = perplexityData.choices[0].message.content;
+    citations = perplexityData.citations || [];
+    searchResults = perplexityData.search_results || [];
+  } else if (Array.isArray(data) && data.length > 0 && data[0].text) {
+    // Old n8n format: [{ "text": "markdown content" }]
     markdownContent = data[0].text;
   } else if (typeof data === 'string') {
     markdownContent = data;
@@ -109,7 +120,7 @@ function displayResults(data) {
   
   // Display Summary (first paragraph or intro)
   if (sections.summary) {
-    summaryContent.innerHTML = formatMarkdown(sections.summary);
+    summaryContent.innerHTML = formatMarkdown(sections.summary, citations);
   } else {
     summaryContent.textContent = 'Research complete. See findings below.';
   }
@@ -119,13 +130,35 @@ function displayResults(data) {
   
   if (sections.mainSections.length > 0) {
     sections.mainSections.forEach(section => {
-      insightsGrid.appendChild(createMarkdownInsightCard(section.title, section.content));
+      insightsGrid.appendChild(createMarkdownInsightCard(section.title, section.content, citations));
     });
   }
 
-  // Display sources
+  // Display sources - prefer Perplexity search_results, fall back to parsed sources
   sourcesGrid.innerHTML = '';
-  if (sections.sources && sections.sources.length > 0) {
+  if (searchResults.length > 0) {
+    // Use Perplexity's search_results (better quality)
+    searchResults.forEach((source, index) => {
+      const sourceCard = document.createElement('a');
+      sourceCard.className = 'source-card';
+      sourceCard.href = source.url;
+      sourceCard.target = '_blank';
+      sourceCard.rel = 'noopener';
+      
+      const date = source.date ? new Date(source.date).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short'
+      }) : '';
+      
+      sourceCard.innerHTML = `
+        <span class="source-number">${index + 1}</span>
+        <span class="source-title">${escapeHtml(source.title || 'Source')}</span>
+        <span class="source-domain">${escapeHtml(extractDomainName(source.url))}${date ? ' · ' + date : ''}</span>
+      `;
+      sourcesGrid.appendChild(sourceCard);
+    });
+  } else if (sections.sources && sections.sources.length > 0) {
+    // Fall back to parsed sources from markdown
     sections.sources.forEach((source, index) => {
       const sourceCard = document.createElement('a');
       sourceCard.className = 'source-card';
@@ -144,10 +177,10 @@ function displayResults(data) {
   // Display Rangeway Implications
   implicationsList.innerHTML = '';
   if (sections.implications) {
-    const items = sections.implications.split('\n').filter(line => line.trim().startsWith('**') || line.trim().startsWith('-'));
+    const items = parseImplications(sections.implications);
     items.forEach(item => {
       const li = document.createElement('li');
-      li.innerHTML = formatMarkdown(item.replace(/^[-*]\s*/, ''));
+      li.innerHTML = formatMarkdown(item, citations);
       implicationsList.appendChild(li);
     });
   } else {
@@ -155,6 +188,38 @@ function displayResults(data) {
     li.textContent = 'Review the research findings above for strategic insights.';
     implicationsList.appendChild(li);
   }
+}
+
+// Parse implications section into individual items
+function parseImplications(text) {
+  const items = [];
+  const lines = text.split('\n');
+  let currentItem = '';
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    // Check if this is a new bold heading or bullet point
+    if (trimmed.startsWith('**') || trimmed.startsWith('- **') || trimmed.startsWith('* **')) {
+      if (currentItem) {
+        items.push(currentItem.trim());
+      }
+      currentItem = trimmed.replace(/^[-*]\s*/, '');
+    } else if (trimmed) {
+      currentItem += ' ' + trimmed;
+    }
+  });
+  
+  if (currentItem) {
+    items.push(currentItem.trim());
+  }
+  
+  // If no structured items found, try splitting by double newlines or return as single item
+  if (items.length === 0) {
+    const paragraphs = text.split('\n\n').filter(p => p.trim());
+    return paragraphs.length > 0 ? paragraphs : [text];
+  }
+  
+  return items;
 }
 
 // Parse markdown into logical sections
@@ -195,7 +260,7 @@ function parseMarkdownSections(markdown) {
 
       // Find first paragraph as summary
       const firstParagraph = content.split('\n\n')[0];
-      if (firstParagraph && !firstParagraph.startsWith('##')) {
+      if (firstParagraph && !firstParagraph.startsWith('##') && firstParagraph.length > 20) {
         result.summary = firstParagraph;
       } else {
         result.summary = `Research findings for: ${title}`;
@@ -265,7 +330,7 @@ function extractDomainName(url) {
 }
 
 // Create an insight card from markdown section
-function createMarkdownInsightCard(title, content) {
+function createMarkdownInsightCard(title, content, citations = []) {
   const card = document.createElement('div');
   card.className = 'insight-card';
   
@@ -280,24 +345,26 @@ function createMarkdownInsightCard(title, content) {
     category = 'misconception';
   } else if (titleLower.includes('metric') || titleLower.includes('data') || titleLower.includes('number') || titleLower.includes('funding') || titleLower.includes('competitive')) {
     category = 'metrics';
+  } else if (titleLower.includes('strateg') || titleLower.includes('differentia') || titleLower.includes('operational') || titleLower.includes('pillar') || titleLower.includes('core')) {
+    category = 'case_study';
   }
   
   card.innerHTML = `
     <h3 class="${category}">${escapeHtml(title)}</h3>
-    <div class="insight-content">${formatMarkdown(content)}</div>
+    <div class="insight-content">${formatMarkdown(content, citations)}</div>
   `;
   
   return card;
 }
 
-// Simple markdown to HTML formatter
-function formatMarkdown(text) {
+// Simple markdown to HTML formatter with citation support
+function formatMarkdown(text, citations = []) {
   if (!text) return '';
 
   // First, handle tables before other processing
   text = parseMarkdownTables(text);
 
-  return text
+  let html = text
     // Bold
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     // Italic (but not in URLs)
@@ -309,23 +376,29 @@ function formatMarkdown(text) {
       const domain = extractDomainName(url);
       return `<a href="${url}" target="_blank" rel="noopener" class="inline-source">[${domain}]</a>`;
     })
-    // Bare URLs (not already in a tag)
-    .replace(/(?<!["=])(https?:\/\/[^\s<>"]+)/g, (match, url) => {
-      // Clean trailing punctuation
-      const cleanUrl = url.replace(/[.,;:!?)]+$/, '');
-      const trailing = url.slice(cleanUrl.length);
-      const domain = extractDomainName(cleanUrl);
-      return `<a href="${cleanUrl}" target="_blank" rel="noopener" class="inline-source">[${domain}]</a>${trailing}`;
-    })
     // Line breaks
     .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    // Wrap in paragraph (but not tables)
-    .replace(/^(?!<table)(.+)$/s, '<p>$1</p>')
-    // Clean up empty paragraphs
-    .replace(/<p><\/p>/g, '')
-    // Citation references like [1]
-    .replace(/\[(\d+)\]/g, '<sup class="citation">[$1]</sup>');
+    .replace(/\n/g, '<br>');
+  
+  // Replace citation references [1], [2], etc. with actual links from citations array
+  html = html.replace(/\[(\d+)\]/g, (match, num) => {
+    const index = parseInt(num) - 1;
+    if (citations && citations[index]) {
+      const domain = extractDomainName(citations[index]);
+      return `<a href="${citations[index]}" target="_blank" rel="noopener" class="citation-link" title="${domain}">[${num}]</a>`;
+    }
+    return `<sup class="citation">${match}</sup>`;
+  });
+  
+  // Wrap in paragraph (but not tables)
+  if (!html.startsWith('<table')) {
+    html = '<p>' + html + '</p>';
+  }
+  
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+  
+  return html;
 }
 
 // Parse markdown tables into HTML tables
