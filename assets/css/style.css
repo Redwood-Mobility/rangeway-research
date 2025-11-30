@@ -581,6 +581,21 @@ body {
   cursor: default;
 }
 
+/* Clickable citation links */
+.citation-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85em;
+  vertical-align: super;
+  transition: color 0.2s ease;
+}
+
+.citation-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
 /* Insight card content formatting */
 .insight-content p {
   margin-bottom: 0.75rem;
