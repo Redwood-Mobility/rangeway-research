@@ -8,6 +8,7 @@ const quickSearchTags = document.querySelectorAll('.quick-search-tag');
 const loadingSection = document.getElementById('loading');
 const resultsSection = document.getElementById('results');
 const errorSection = document.getElementById('error');
+const logoContainer = document.querySelector('.logo-container');
 
 // Results Elements
 const summaryContent = document.getElementById('summary-content');
@@ -27,6 +28,12 @@ quickSearchTags.forEach(tag => {
     performSearch();
   });
 });
+
+// Logo click to refresh/start over
+logoContainer.addEventListener('click', () => {
+  location.reload();
+});
+logoContainer.style.cursor = 'pointer';
 
 // Main Search Function
 async function performSearch() {
