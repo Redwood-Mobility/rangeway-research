@@ -289,10 +289,14 @@ body {
 }
 
 .source-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 1.25rem;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
   transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -302,46 +306,39 @@ body {
   box-shadow: 0 8px 30px var(--shadow-medium);
 }
 
-.source-card .category {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
+.source-card .source-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  border-radius: 4px;
-  margin-bottom: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.source-card .category.trends { background: rgba(44, 95, 124, 0.15); color: var(--category-trends); }
-.source-card .category.contrarian { background: rgba(240, 144, 96, 0.15); color: var(--category-contrarian); }
-.source-card .category.case_study { background: rgba(74, 156, 109, 0.15); color: var(--category-case-study); }
-.source-card .category.misconception { background: rgba(139, 92, 246, 0.15); color: var(--category-misconception); }
-.source-card .category.metrics { background: rgba(236, 72, 153, 0.15); color: var(--category-metrics); }
-
-.source-card h3 {
+.source-card .source-title {
+  flex: 1;
   font-family: 'Montserrat', sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   color: var(--text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.source-card p {
-  font-size: 0.9rem;
+.source-card .source-domain {
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  margin-bottom: 0.75rem;
+  white-space: nowrap;
 }
 
-.source-card a {
-  font-size: 0.85rem;
+.source-card:hover .source-title {
   color: var(--accent);
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.source-card a:hover {
-  color: var(--accent-hover);
-  text-decoration: underline;
 }
 
 /* Insights Section */
@@ -522,4 +519,89 @@ body {
   .insights-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Inline Source Links */
+.inline-source {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85em;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.inline-source:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* Markdown Tables */
+.markdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.markdown-table thead {
+  background: rgba(240, 144, 96, 0.1);
+}
+
+.markdown-table th {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  color: var(--text-heading);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.markdown-table td {
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.markdown-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-table tbody tr:hover {
+  background: rgba(240, 144, 96, 0.05);
+}
+
+/* Citation superscripts */
+.citation {
+  color: var(--accent);
+  font-weight: 500;
+  cursor: default;
+}
+
+/* Insight card content formatting */
+.insight-content p {
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.insight-content p:last-child {
+  margin-bottom: 0;
+}
+
+.insight-content a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.insight-content a:hover {
+  text-decoration: underline;
+}
+
+.insight-content strong {
+  color: var(--text-primary);
+  font-weight: 600;
 }

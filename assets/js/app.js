@@ -123,8 +123,23 @@ function displayResults(data) {
     });
   }
 
-  // Clear sources grid (we don't have structured sources in markdown format)
+  // Display sources
   sourcesGrid.innerHTML = '';
+  if (sections.sources && sections.sources.length > 0) {
+    sections.sources.forEach((source, index) => {
+      const sourceCard = document.createElement('a');
+      sourceCard.className = 'source-card';
+      sourceCard.href = source.url;
+      sourceCard.target = '_blank';
+      sourceCard.rel = 'noopener';
+      sourceCard.innerHTML = `
+        <span class="source-number">${index + 1}</span>
+        <span class="source-title">${escapeHtml(source.title)}</span>
+        <span class="source-domain">${escapeHtml(extractDomainName(source.url))}</span>
+      `;
+      sourcesGrid.appendChild(sourceCard);
+    });
+  }
   
   // Display Rangeway Implications
   implicationsList.innerHTML = '';
@@ -147,25 +162,29 @@ function parseMarkdownSections(markdown) {
   const result = {
     summary: '',
     mainSections: [],
-    implications: ''
+    implications: '',
+    sources: []
   };
 
   if (!markdown) return result;
 
   // Split by ## headers
   const parts = markdown.split(/(?=^## )/gm);
-  
+
   parts.forEach((part, index) => {
     const lines = part.trim().split('\n');
     const firstLine = lines[0];
-    
+
     // Check if this is a header section
     if (firstLine.startsWith('## ')) {
       const title = firstLine.replace('## ', '').trim();
       const content = lines.slice(1).join('\n').trim();
-      
+
       if (title.toLowerCase().includes('implication') || title.toLowerCase().includes('rangeway')) {
         result.implications = content;
+      } else if (title.toLowerCase().includes('source') || title.toLowerCase().includes('reference')) {
+        // Parse sources section
+        result.sources = parseSourcesList(content);
       } else {
         result.mainSections.push({ title, content });
       }
@@ -173,7 +192,7 @@ function parseMarkdownSections(markdown) {
       // Main title - use content after title as summary
       const title = firstLine.replace('# ', '').trim();
       const content = lines.slice(1).join('\n').trim();
-      
+
       // Find first paragraph as summary
       const firstParagraph = content.split('\n\n')[0];
       if (firstParagraph && !firstParagraph.startsWith('##')) {
@@ -188,6 +207,61 @@ function parseMarkdownSections(markdown) {
   });
 
   return result;
+}
+
+// Parse a sources/references section into structured list
+function parseSourcesList(content) {
+  const sources = [];
+  const lines = content.split('\n');
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Match markdown links: [title](url)
+    const mdLinkMatch = trimmed.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
+    if (mdLinkMatch) {
+      sources.push({
+        title: mdLinkMatch[1],
+        url: mdLinkMatch[2]
+      });
+      return;
+    }
+
+    // Match numbered/bulleted items with URLs
+    const listItemMatch = trimmed.match(/^[\d\-\*\.\)]+\s*(.+?)(?:\s*[-–—]\s*|\s*:\s*|\s+)(https?:\/\/\S+)/);
+    if (listItemMatch) {
+      sources.push({
+        title: listItemMatch[1].trim(),
+        url: listItemMatch[2].replace(/[)\].,]+$/, '') // Clean trailing punctuation
+      });
+      return;
+    }
+
+    // Match standalone URLs
+    const urlMatch = trimmed.match(/(https?:\/\/\S+)/);
+    if (urlMatch) {
+      const url = urlMatch[1].replace(/[)\].,]+$/, '');
+      // Try to extract title from the line
+      const titlePart = trimmed.replace(urlMatch[0], '').replace(/^[\d\-\*\.\)]+\s*/, '').trim();
+      sources.push({
+        title: titlePart || extractDomainName(url),
+        url: url
+      });
+    }
+  });
+
+  return sources;
+}
+
+// Extract a readable domain name from URL
+function extractDomainName(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
 }
 
 // Create an insight card from markdown section
@@ -219,23 +293,118 @@ function createMarkdownInsightCard(title, content) {
 // Simple markdown to HTML formatter
 function formatMarkdown(text) {
   if (!text) return '';
-  
+
+  // First, handle tables before other processing
+  text = parseMarkdownTables(text);
+
   return text
     // Bold
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    // Italic (but not in URLs)
+    .replace(/(?<![:/])\*([^*]+)\*(?![:/])/g, '<em>$1</em>')
+    // Markdown links: [title](url)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    // Inline URLs in parentheses: (https://example.com) -> [source]
+    .replace(/\((https?:\/\/[^)\s]+)\)/g, (match, url) => {
+      const domain = extractDomainName(url);
+      return `<a href="${url}" target="_blank" rel="noopener" class="inline-source">[${domain}]</a>`;
+    })
+    // Bare URLs (not already in a tag)
+    .replace(/(?<!["=])(https?:\/\/[^\s<>"]+)/g, (match, url) => {
+      // Clean trailing punctuation
+      const cleanUrl = url.replace(/[.,;:!?)]+$/, '');
+      const trailing = url.slice(cleanUrl.length);
+      const domain = extractDomainName(cleanUrl);
+      return `<a href="${cleanUrl}" target="_blank" rel="noopener" class="inline-source">[${domain}]</a>${trailing}`;
+    })
     // Line breaks
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>')
-    // Wrap in paragraph
-    .replace(/^(.+)$/, '<p>$1</p>')
+    // Wrap in paragraph (but not tables)
+    .replace(/^(?!<table)(.+)$/s, '<p>$1</p>')
     // Clean up empty paragraphs
     .replace(/<p><\/p>/g, '')
     // Citation references like [1]
     .replace(/\[(\d+)\]/g, '<sup class="citation">[$1]</sup>');
+}
+
+// Parse markdown tables into HTML tables
+function parseMarkdownTables(text) {
+  const lines = text.split('\n');
+  const result = [];
+  let inTable = false;
+  let tableRows = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Check if this line looks like a table row (has | characters)
+    if (line.includes('|') && line.startsWith('|')) {
+      // Check if it's a separator row (|---|---|)
+      if (/^\|[\s\-:]+\|/.test(line) && line.includes('-')) {
+        // This is a separator row, skip it but mark we're in a table
+        inTable = true;
+        continue;
+      }
+
+      // Parse table cells
+      const cells = line.split('|')
+        .map(cell => cell.trim())
+        .filter((cell, idx, arr) => idx !== 0 && idx !== arr.length); // Remove empty first/last from leading/trailing |
+
+      if (cells.length > 0) {
+        if (!inTable) {
+          // This is the header row
+          inTable = true;
+          tableRows.push({ type: 'header', cells });
+        } else {
+          tableRows.push({ type: 'body', cells });
+        }
+      }
+    } else {
+      // Not a table row
+      if (inTable && tableRows.length > 0) {
+        // End of table, render it
+        result.push(renderTable(tableRows));
+        tableRows = [];
+        inTable = false;
+      }
+      result.push(line);
+    }
+  }
+
+  // Handle table at end of text
+  if (tableRows.length > 0) {
+    result.push(renderTable(tableRows));
+  }
+
+  return result.join('\n');
+}
+
+// Render table rows as HTML table
+function renderTable(rows) {
+  if (rows.length === 0) return '';
+
+  let html = '<table class="markdown-table">';
+
+  rows.forEach((row, index) => {
+    if (row.type === 'header') {
+      html += '<thead><tr>';
+      row.cells.forEach(cell => {
+        html += `<th>${cell}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+    } else {
+      html += '<tr>';
+      row.cells.forEach(cell => {
+        html += `<td>${cell}</td>`;
+      });
+      html += '</tr>';
+    }
+  });
+
+  html += '</tbody></table>';
+  return html;
 }
 
 function escapeHtml(text) {
