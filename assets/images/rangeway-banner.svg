@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="200" viewBox="0 0 800 200">
+    <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F09060"/>
+            <stop offset="100%" stop-color="#FFB366"/>
+        </linearGradient>
+        <clipPath id="logoRounded">
+            <rect x="25" y="25" width="150" height="150" rx="44" ry="44" />
+        </clipPath>
+    </defs>
+
+    <!-- Logo Background -->
+    <rect x="25" y="25" width="150" height="150" rx="44" ry="44" fill="url(#logoGrad)" />
+
+    <!-- Mountains (clipped to rounded square) -->
+    <g clip-path="url(#logoRounded)">
+        <path d="M 25 139.7 L 60.3 104.4 L 91.2 130.9 L 122.1 100 L 175 139.7 L 175 175 L 25 175 Z" fill="#2f2f2f" />
+    </g>
+
+    <!-- Sun -->
+    <circle cx="135.3" cy="55.7" r="17.6" fill="white" fill-opacity="0.6" />
+
+    <!-- RANGEWAY Wordmark -->
+    <text x="220" y="105"
+          font-family="Montserrat, Arial, Helvetica, sans-serif"
+          font-size="85"
+          font-weight="800"
+          letter-spacing="7"
+          fill="#4A4A4A"
+          dominant-baseline="middle">RANGEWAY</text>
+</svg>

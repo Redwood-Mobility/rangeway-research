@@ -1,24 +1,42 @@
 ---
 layout: default
-title: Research Engine
+title: Rangeway Research
 ---
 
 <header class="header">
-  <h1>Rangeway Research</h1>
+  <div class="logo-container">
+    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#F09060"/>
+          <stop offset="100%" stop-color="#FFB366"/>
+        </linearGradient>
+        <clipPath id="logoRounded">
+          <rect width="34" height="34" rx="10" ry="10" />
+        </clipPath>
+      </defs>
+      <rect width="34" height="34" rx="10" ry="10" fill="url(#logoGrad)" />
+      <g clip-path="url(#logoRounded)">
+        <path d="M 0 26 L 8 18 L 15 24 L 22 17 L 34 26 L 34 34 L 0 34 Z" fill="#2f2f2f" />
+      </g>
+      <circle cx="25" cy="7" r="4" fill="white" fill-opacity="0.6" />
+    </svg>
+    <h1>RANGEWAY RESEARCH</h1>
+  </div>
   <p>AI-powered insights for EV charging and hospitality</p>
 </header>
 
 <section class="search-section">
   <div class="search-container">
-    <input 
-      type="text" 
-      id="search-input" 
-      class="search-input" 
+    <input
+      type="text"
+      id="search-input"
+      class="search-input"
       placeholder="Search for EV charging trends, hospitality insights, competitor intel..."
     >
     <button id="search-button" class="search-button">Search</button>
   </div>
-  
+
   <div class="quick-searches">
     <button class="quick-search-tag" data-query="EV road trip hospitality trends 2025">Road Trip Trends</button>
     <button class="quick-search-tag" data-query="Tesla Supercharger lounge amenities experience">Tesla Lounges</button>
@@ -60,5 +78,5 @@ title: Research Engine
 </div>
 
 <footer class="footer">
-  <p>Powered by Perplexity AI via n8n</p>
+  <p>Powered by <a href="https://www.perplexity.ai/" target="_blank" rel="noopener">Perplexity AI</a> via n8n</p>
 </footer>

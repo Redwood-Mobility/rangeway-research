@@ -1,7 +1,7 @@
 title: Rangeway Research
 description: AI-powered research engine for EV charging and hospitality insights
-baseurl: "/rangeway-research"
-url: ""
+baseurl: ""
+url: "https://research.rangewayev.com"
 
 # Build settings
 markdown: kramdown
